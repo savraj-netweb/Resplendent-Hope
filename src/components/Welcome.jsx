@@ -123,10 +123,24 @@ const card = {
 /* Component                                                           */
 /* ------------------------------------------------------------------ */
 export default function Welcome() {
-  const [theme, setTheme] = useState("dawn");
+  const theme = "dawn";
   const [amount, setAmount] = useState(null);
   const [subscribed, setSubscribed] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const rootRef = useRef(null);
+
+  /* lock body scroll + close drawer on Escape while the off-canvas menu is open */
+  useEffect(() => {
+    if (!menuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e) => { if (e.key === "Escape") setMenuOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
 
   const year = new Date().getFullYear();
   const activeNote = AMOUNTS.find((a) => a.amt === amount)?.note ?? "A gift of any size opens a door.";
@@ -179,20 +193,70 @@ export default function Welcome() {
             <Logo size={34} />
             <span style={{ fontFamily: "var(--font-display)", fontSize: "23px", fontWeight: 600, letterSpacing: ".01em", lineHeight: 1 }}>Resplendent Hope</span>
           </a>
-          <div style={{ display: "flex", alignItems: "center", gap: "30px", fontSize: "14.5px" }}>
+          <div className="rh-nav-desktop" style={{ display: "flex", alignItems: "center", gap: "30px", fontSize: "14.5px" }}>
             {NAV_LINKS.map((l) => (
               <a key={l.href} href={l.href} className="rh-navlink" style={{ color: "var(--muted)", textDecoration: "none" }}>{l.label}</a>
             ))}
             <a href="#give" className="rh-cta" style={{ display: "inline-flex", alignItems: "center", padding: "11px 22px", background: "var(--cta)", color: "#fff", borderRadius: "999px", textDecoration: "none", fontWeight: 600, letterSpacing: ".02em", boxShadow: "0 6px 18px -8px var(--cta)" }}>Donate</a>
           </div>
+
+          {/* hamburger — mobile only */}
+          <button
+            type="button"
+            className="rh-nav-toggle"
+            aria-label="Open menu"
+            aria-expanded={menuOpen}
+            aria-controls="rh-mobile-drawer"
+            onClick={() => setMenuOpen(true)}
+            style={{ display: "none", flexDirection: "column", justifyContent: "center", gap: "5px", width: "44px", height: "44px", padding: "0 10px", background: "transparent", border: "none", cursor: "pointer" }}
+          >
+            <span style={{ display: "block", height: "2px", borderRadius: "2px", background: "var(--ink)" }} />
+            <span style={{ display: "block", height: "2px", borderRadius: "2px", background: "var(--ink)" }} />
+            <span style={{ display: "block", height: "2px", borderRadius: "2px", background: "var(--ink)" }} />
+          </button>
         </nav>
       </header>
+
+      {/* OFF-CANVAS MOBILE NAV */}
+      <div
+        className="rh-nav-backdrop"
+        onClick={() => setMenuOpen(false)}
+        aria-hidden="true"
+        style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(16,20,17,.5)", backdropFilter: "blur(2px)", opacity: menuOpen ? 1 : 0, visibility: menuOpen ? "visible" : "hidden", transition: "opacity .3s ease, visibility .3s ease" }}
+      />
+      <aside
+        id="rh-mobile-drawer"
+        className="rh-nav-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Site navigation"
+        style={{ position: "fixed", top: 0, right: 0, zIndex: 95, height: "100%", width: "min(86vw,340px)", display: "flex", flexDirection: "column", padding: "24px", background: "var(--bg)", borderLeft: "1px solid var(--line)", boxShadow: "-24px 0 60px -24px rgba(0,0,0,.45)", transform: menuOpen ? "translateX(0)" : "translateX(100%)", transition: "transform .34s cubic-bezier(.4,0,.2,1)", overflowY: "auto" }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "28px" }}>
+          <span style={{ display: "flex", alignItems: "center", gap: "11px" }}>
+            <Logo size={30} />
+            <span style={{ fontFamily: "var(--font-display)", fontSize: "20px", fontWeight: 600, lineHeight: 1 }}>Resplendent Hope</span>
+          </span>
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={() => setMenuOpen(false)}
+            style={{ width: "40px", height: "40px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "26px", lineHeight: 1, color: "var(--ink)", background: "transparent", border: "1px solid var(--line)", borderRadius: "50%", cursor: "pointer" }}
+          >×</button>
+        </div>
+        <nav style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          {NAV_LINKS.map((l) => (
+            <a key={l.href} href={l.href} onClick={() => setMenuOpen(false)} className="rh-navlink" style={{ padding: "14px 6px", fontSize: "18px", color: "var(--ink)", textDecoration: "none", borderBottom: "1px solid var(--line)" }}>{l.label}</a>
+          ))}
+        </nav>
+        <a href="#give" onClick={() => setMenuOpen(false)} className="rh-cta" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", marginTop: "28px", padding: "15px 22px", background: "var(--cta)", color: "#fff", borderRadius: "999px", textDecoration: "none", fontWeight: 600, fontSize: "16px", boxShadow: "0 10px 26px -10px var(--cta)" }}>Donate</a>
+      </aside>
 
       {/* HERO */}
       <section id="top" data-screen-label="Hero" style={{ position: "relative", minHeight: "88vh", display: "flex", alignItems: "center", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(120% 120% at 18% 16%, color-mix(in srgb,var(--accent) 62%,var(--dark1)) 0%, transparent 56%), radial-gradient(120% 120% at 88% 24%, color-mix(in srgb,var(--accent2) 50%,transparent) 0%, transparent 52%), radial-gradient(130% 130% at 84% 92%, var(--accent-deep) 0%, transparent 58%), linear-gradient(150deg, var(--dark1) 0%, var(--dark2) 100%)" }} />
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(1100px 700px at 80% 10%,color-mix(in srgb,var(--accent) 32%,transparent) 0%,transparent 60%),linear-gradient(100deg,rgba(16,20,17,.72) 0%,rgba(16,20,17,.4) 50%,rgba(16,20,17,.1) 100%)" }} />
-        <span style={{ position: "absolute", bottom: "16px", right: "18px", ...mono, fontSize: "11px", letterSpacing: ".04em", color: "rgba(255,255,255,.5)" }}>PHOTO — first light over a Sri Lankan coastline; community at dawn</span>
+        <span className="rh-hero-caption" style={{ position: "absolute", bottom: "16px", right: "18px", maxWidth: "min(46vw,300px)", textAlign: "right", lineHeight: 1.45, ...mono, fontSize: "11px", letterSpacing: ".04em", color: "rgba(255,255,255,.5)" }}>PHOTO — first light over a Sri Lankan coastline; community at dawn</span>
         <div style={{ position: "relative", maxWidth: "1240px", margin: "0 auto", padding: "120px 32px", width: "100%" }}>
           <div style={{ maxWidth: "760px" }}>
             <p data-reveal style={{ margin: "0 0 22px", ...mono, fontSize: "12.5px", letterSpacing: ".32em", textTransform: "uppercase", color: "var(--accent)" }}>Resplendent Hope · A Christian Ministry</p>
@@ -426,17 +490,6 @@ export default function Welcome() {
           </div>
         </div>
       </footer>
-
-      {/* THEME SWITCHER */}
-      <div style={{ position: "fixed", bottom: "22px", left: "50%", transform: "translateX(-50%)", zIndex: 80, display: "flex", alignItems: "center", gap: "6px", padding: "7px 8px 7px 16px", background: "color-mix(in srgb,var(--ink) 92%,transparent)", borderRadius: "999px", boxShadow: "0 12px 36px -10px rgba(0,0,0,.5)", backdropFilter: "blur(8px)" }}>
-        <span style={{ ...mono, fontSize: "10.5px", letterSpacing: ".14em", textTransform: "uppercase", color: "rgba(255,255,255,.6)", marginRight: "6px" }}>Look</span>
-        {["dawn", "island", "sanctuary"].map((t) => {
-          const active = theme === t;
-          return (
-            <button key={t} type="button" onClick={() => setTheme(t)} style={{ padding: "8px 16px", border: "none", borderRadius: "999px", cursor: "pointer", fontFamily: "var(--font-body)", fontSize: "13.5px", fontWeight: 600, background: active ? "var(--accent)" : "transparent", color: active ? "#fff" : "rgba(255,255,255,.7)", textTransform: "capitalize" }}>{t}</button>
-          );
-        })}
-      </div>
     </div>
   );
 }
@@ -466,6 +519,13 @@ body{margin:0}
 .rh-amount:hover{border-color:var(--accent)}
 .rh-email:focus{border-color:var(--accent)!important}
 .rh-footer-link:hover{color:#fff}
+@media (max-width:860px){
+  .rh-nav-desktop{display:none!important}
+  .rh-nav-toggle{display:flex!important}
+}
+@media (min-width:861px){
+  .rh-nav-drawer,.rh-nav-backdrop{display:none!important}
+}
 @media (max-width:920px){
   .rh-story-grid,.rh-fund-grid{grid-template-columns:1fr!important}
   .rh-grid-3{grid-template-columns:repeat(2,1fr)!important}
@@ -475,5 +535,6 @@ body{margin:0}
 }
 @media (max-width:600px){
   .rh-grid-1,.rh-grid-3,.rh-grid-4{grid-template-columns:1fr!important}
+  .rh-hero-caption{display:none!important}
 }
 `;
